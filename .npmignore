@@ -1,0 +1,3 @@
+node_modules/*
+vue.config.js
+babel.config.js

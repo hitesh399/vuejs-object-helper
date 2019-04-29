@@ -1,0 +1,25 @@
+{
+  "name": "vuejs-object-helper",
+  "version": "0.1.25",
+  "private": false,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "build-bundle": "vue-cli-service build --target lib --name lq.helper src/main.js",
+    "dist": "webpack --config build/webpack.common.js"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.26.0",
+    "recursive-copy": "^2.0.10",
+    "vue": "^2.6.10"
+  },
+  "main": "/dist/lq.helper.common.js",
+  "devDependencies": {
+    "@babel/polyfill": "^7.2.5",
+    "@vue/cli-plugin-babel": "^3.2.0",
+    "@vue/cli-service": "^3.2.0",
+    "babel-plugin-component": "^1.1.1",
+    "vue-template-compiler": "^2.5.17",
+    "webpack-cli": "^3.2.3"
+  }
+}
