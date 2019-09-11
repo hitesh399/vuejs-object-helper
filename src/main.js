@@ -1,7 +1,39 @@
 import Vue from 'vue';
+// To Match the string like: [tets=132], [Test1<=132]
+const matchArrayKey = /^\[+([0-9a-z]+)+([\=\>\<]+)+(.+)\]$/i
 
-export default  {
+export default {
 
+	getObjectFromArray: function (obj, prop) {
+		const arrayKey = prop.match(matchArrayKey)
+		if (arrayKey && this.isArray(obj)) {
+			const key = arrayKey[1]
+			const operator = arrayKey[2]
+			const value = arrayKey[3]
+			let item = null
+			obj.every(function (itm) {
+				if (itm[key] !== undefined) {
+					const val = itm[key].toString();
+					if (
+						(operator === '=' && val == value) ||
+						(operator === '>=' && val >= value) ||
+						(operator === '>' && val > value) ||
+						(operator === '<' && val < value) ||
+						(operator === '<=' && val <= value) ||
+						(operator === '<>' && val != value)
+					) {
+						item = itm					
+						return false
+					} else {
+						return true
+					}
+				}
+				return true
+			})
+			return item;
+		}
+		return null;
+	},
 	/*
 	 |----------------------------------------------
 	 | To get the value of key from the given object
@@ -13,11 +45,14 @@ export default  {
 	getProp: function (obj, props, defaultValue) {
 
 		props = typeof props === "string" ? props.split('.') : props;
-
-		const prop = props.shift()
+		let prop = props.shift()
+		const _obj_in_array = this.getObjectFromArray(obj, prop)
+		if (_obj_in_array !== null) {
+			obj = _obj_in_array
+			prop = props.shift()
+		}
 		if (!obj || obj[prop] === undefined || !props.length) {
-			
-			return !obj ||  obj[prop] === undefined  ? defaultValue: obj[prop]; 
+			return !obj || obj[prop] === undefined ? defaultValue : obj[prop];
 		}
 		return this.getProp(obj[prop], props, defaultValue)
 	},
@@ -38,16 +73,16 @@ export default  {
 		if (!obj[prop] && prop !== '*') {
 			return
 		}
-	
-		if(prop === '*') {
-	
-			obj.map((val,index) => {            
+
+		if (prop === '*') {
+
+			obj.map((val, index) => {
 				this.deleteProp(obj, [index].concat(props))
 			})
 		}
 		else {
 
-			if(props.length === 1   && this.isInteger(props[0]) ){
+			if (props.length === 1 && this.isInteger(props[0])) {
 
 				obj[prop].splice(parseInt(props[0]), 1);
 				return;
@@ -68,26 +103,26 @@ export default  {
 	 * @param value => Any, [key value]
 	 */
 	setProp: function (obj, props, value, replace) {
-		
+
 		props = typeof props === "string" ? props.split('.') : props;
 		replace = replace === undefined ? false : replace;
 
 		const prop = props.shift()
-		
+
 		if (!obj[prop]) {
 
-			Vue.set(obj, prop, (props.length >= 1   && this.isInteger(props[0]) ? [] : {}) )
+			Vue.set(obj, prop, (props.length >= 1 && this.isInteger(props[0]) ? [] : {}))
 		}
 		if (!props.length) {
 
-			if ( this.isObject(value) && replace === false) {
+			if (this.isObject(value) && replace === false) {
 
-			  var preValue = obj[prop] ? obj[prop]: {};
-			  Vue.set(obj, prop, {...preValue, ...value} );
+				var preValue = obj[prop] ? obj[prop] : {};
+				Vue.set(obj, prop, { ...preValue, ...value });
 
 			} else {
 
-			  Vue.set(obj, prop, value);
+				Vue.set(obj, prop, value);
 			}
 
 			return
@@ -103,56 +138,50 @@ export default  {
 	 * @param value => Array | Object | String,
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
-	pushProp: function(obj, props, value, listUniqueKeyName) {
-	  	
-	  	props = typeof props === "string" ? props.split('.') : props;
-	  	// Convert the value into Array
+	pushProp: function (obj, props, value, listUniqueKeyName) {
+
+		props = typeof props === "string" ? props.split('.') : props;
+		// Convert the value into Array
 		value = !this.isArray(value) ? [value] : value;
 		//console.log('pushProp',props, value)
 		const prop = props.shift()
 
 		if (!obj[prop]) {
 			//console.log('Testing....', prop, props, ( (props.length >= 1  && this.isInteger(props[0]) || props.length ===0 ) ? [] : {}))
-			Vue.set(obj, prop, ( (props.length >= 1  && this.isInteger(props[0]) || props.length ===0 ) ? [] : {}) )
+			Vue.set(obj, prop, ((props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}))
 		}
 		if (!props.length) {
 
 			if (obj[prop] !== undefined) {
-
 				let items = obj[prop];
-
-				// Storeing the items which were present before updating..
-				let first_items = Object.assign([], items);
+				let first_items = items.slice()
 				let max_length = first_items.length;
 
-				value.forEach(function(v, index) {
+				value.forEach(function (v, index) {
 
 					let isAlreadyPresent = null;
 
 					if (listUniqueKeyName) {
 
-					    first_items.forEach((fi) => {
+						first_items.forEach((fi) => {
 
-					        if(fi[listUniqueKeyName] == v[listUniqueKeyName]) {
-					            isAlreadyPresent = true;
-					        }
-					    })
+							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
+								isAlreadyPresent = true;
+							}
+						})
 					}
 
 					if (isAlreadyPresent === null) {
-					  	Vue.set(items, max_length++, v );
+						Vue.set(items, max_length++, v);
 					}
 
 				});
-
 			}
 
-			 else {
-			  //console.log('pushProp',props, value)
-			  Vue.set(obj, prop, value);
+			else {
+				Vue.set(obj, prop, value);
 
 			}
-
 			return
 		}
 
@@ -168,43 +197,43 @@ export default  {
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
 	unshiftProp: function (obj, props, value, listUniqueKeyName) {
-		
+
 		props = typeof props === "string" ? props.split('.') : props;
 		// Convert the value into Array
 		value = !this.isArray(value) ? [value] : value;
 
 		const prop = props.shift()
-		
+
 		if (!obj[prop]) {
 
-			Vue.set(obj, prop, ( (props.length >= 1  && this.isInteger(props[0]) || props.length ===0 ) ? [] : {}) )
+			Vue.set(obj, prop, ((props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}))
 		}
 		if (!props.length) {
 
 			if (obj[prop] !== undefined) {
-		
+
 				let items = obj[prop];
 
 				// Storeing the items which were present before updating..
 				let first_items = Object.assign([], items);
-				let max_length = items.length;
+				// let max_length = items.length;
 
-				value.forEach(function(v, index) {
+				value.forEach(function (v, index) {
 
 					let isAlreadyPresent = null;
 
-					if(listUniqueKeyName) {
+					if (listUniqueKeyName) {
 
-					    first_items.forEach((fi) => {
+						first_items.forEach((fi) => {
 
-					        if(fi[listUniqueKeyName] == v[listUniqueKeyName]) {
-					            isAlreadyPresent = true;
-					        }
-					    })
+							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
+								isAlreadyPresent = true;
+							}
+						})
 					}
 
-					if(isAlreadyPresent === null) {
-						
+					if (isAlreadyPresent === null) {
+
 						items.unshift(v);
 					}
 				});
@@ -227,7 +256,7 @@ export default  {
 	 */
 	isArray: function (value) {
 
-	  return value && typeof value === 'object' && value.constructor === Array;
+		return value && typeof value === 'object' && value.constructor === Array;
 	},
 	/*
 	 |------------------
@@ -236,7 +265,7 @@ export default  {
 	 * @param value => Object
 	 */
 	isObject: function (value) {
-	  return value && typeof value === 'object' && value.constructor === Object;
+		return value && typeof value === 'object' && value.constructor === Object;
 	},
 	/*
 	 |------------------
@@ -264,37 +293,37 @@ export default  {
 	* Covert Query string to Object
 	*/
 	queryStringToObject: function (url) {
-	  
-	  var params = {};
-	  
-	  var parser = document.createElement('a');
-	  parser.href = url;
-	  var query = parser.search.substring(1);
-	  var vars = query.split('&');
-	  for (var i = 0; i < vars.length; i++) {
-	  var pair = vars[i].split('=');
-	      params[pair[0]] = decodeURIComponent(pair[1]);
-	  }
-	  return params;
+
+		var params = {};
+
+		var parser = document.createElement('a');
+		parser.href = url;
+		var query = parser.search.substring(1);
+		var vars = query.split('&');
+		for (var i = 0; i < vars.length; i++) {
+			var pair = vars[i].split('=');
+			params[pair[0]] = decodeURIComponent(pair[1]);
+		}
+		return params;
 	},
 	/**
 	* Convert Query Object to Query String
 	* @param obj 
 	* @param prefix 
 	*/
-	objectToQueryString: function(obj, prefix)  {
+	objectToQueryString: function (obj, prefix) {
 
 		var str = [],
-		p;
+			p;
 
 		for (p in obj) {
-		  if (obj.hasOwnProperty(p)) {
-		    var k = prefix ? prefix + "[" + p + "]" : p,
-		      v = obj[p];
-		    str.push((v !== null && typeof v === "object") ?
-		      this.objectToQueryString(v, k) :
-		      encodeURIComponent(k) + "=" + encodeURIComponent(v? v : ''));
-		  }
+			if (obj.hasOwnProperty(p)) {
+				var k = prefix ? prefix + "[" + p + "]" : p,
+					v = obj[p];
+				str.push((v !== null && typeof v === "object") ?
+					this.objectToQueryString(v, k) :
+					encodeURIComponent(k) + "=" + encodeURIComponent(v ? v : ''));
+			}
 		}
 		return str.join("&");
 	},
@@ -304,31 +333,31 @@ export default  {
 	 * @param {FormData} form 
 	 * @param {String} namespace 
 	 */
-	objectToFormData: function(obj, form, namespace) {
-		
+	objectToFormData: function (obj, form, namespace) {
+
 		let fd = form || new FormData();
 		let formKey;
-		
-		for(let property in obj) {
-			if(obj.hasOwnProperty(property)) {
-			if (namespace) {
-				formKey = namespace + '[' + property + ']';
-			} else {
-				formKey = property;
-			}
-			
-			// if the property is an object, but not a File, use recursivity.
-			if (obj[property] instanceof Date) {
-				fd.append(formKey, obj[property].toISOString());
-			}
-			else if (typeof obj[property] === 'object' && !(obj[property] instanceof File)) {
-				this.objectToFormData(obj[property], fd, formKey);
-			} else { // if it's a string or a File object
-				fd.append(formKey, obj[property] ? obj[property] : '');
-			}
+
+		for (let property in obj) {
+			if (obj.hasOwnProperty(property)) {
+				if (namespace) {
+					formKey = namespace + '[' + property + ']';
+				} else {
+					formKey = property;
+				}
+
+				// if the property is an object, but not a File, use recursivity.
+				if (obj[property] instanceof Date) {
+					fd.append(formKey, obj[property].toISOString());
+				}
+				else if (typeof obj[property] === 'object' && !(obj[property] instanceof File)) {
+					this.objectToFormData(obj[property], fd, formKey);
+				} else { // if it's a string or a File object
+					fd.append(formKey, obj[property] ? obj[property] : '');
+				}
 			}
 		}
-		
+
 		return fd;
 	},
 	/**
@@ -336,52 +365,52 @@ export default  {
 	 * @param obj => Object
 	 * @param elementName => element name which is going to delete.
 	 */
-	reArrangeObjectIndex: function(obj, elementName) {
+	reArrangeObjectIndex: function (obj, elementName) {
 
-		let errors = {...obj};
+		let errors = { ...obj };
 
 		const errorKeys = Object.keys(errors);
 		let hasChangedInError = false;
 
 		let elementArr = elementName.split('.');
-		let elementLastIndex = elementArr[elementArr.length -1];
+		let elementLastIndex = elementArr[elementArr.length - 1];
 		let isLastIndexInteger = this.isInteger(elementLastIndex);
 		let lastIndex = isLastIndexInteger ? parseInt(elementLastIndex) : null;
 		let elementPath = elementArr.slice(0, -1).join('.');
-		const regex = new RegExp("(?<="+elementPath+".)[0-9]+(?=.|$)");
-		
+		const regex = new RegExp("(?<=" + elementPath + ".)[0-9]+(?=.|$)");
 
-		errorKeys.forEach(function (item) { 
-			
+
+		errorKeys.forEach(function (item) {
+
 			// If the Parent Element's error is deleting then deleting all the child element errors also.
 			// If the element contains the number in end of name then search the child element index and process to deleting.
-			 if(item.indexOf(elementName) === 0) {
-			 	delete errors[item];
-			 	hasChangedInError = true;
-			 }
-			 
-			 //if deleting the Array element's Error then reArrange the errors indexing..
-			 let elementNextIndex = regex.exec(item);
+			if (item.indexOf(elementName) === 0) {
+				delete errors[item];
+				hasChangedInError = true;
+			}
 
-			 if (lastIndex !== null && elementNextIndex) {
+			//if deleting the Array element's Error then reArrange the errors indexing..
+			let elementNextIndex = regex.exec(item);
 
-			 	elementNextIndex = parseInt(elementNextIndex[0]);
+			if (lastIndex !== null && elementNextIndex) {
 
-			 	if(elementNextIndex > lastIndex) {
-				 	
-				 	const newIndex = elementNextIndex-1;
-				 	const oldIndexVal = errors[item];
-				 	const newItemIndex = item.replace(regex, newIndex);
+				elementNextIndex = parseInt(elementNextIndex[0]);
 
-				 	delete errors[item];
-				 	errors[newItemIndex] = oldIndexVal;
-				 	hasChangedInError = true;
-				 }
-			 	
-			 }
+				if (elementNextIndex > lastIndex) {
+
+					const newIndex = elementNextIndex - 1;
+					const oldIndexVal = errors[item];
+					const newItemIndex = item.replace(regex, newIndex);
+
+					delete errors[item];
+					errors[newItemIndex] = oldIndexVal;
+					hasChangedInError = true;
+				}
+
+			}
 		});
 
-		return hasChangedInError ? errors: null;
+		return hasChangedInError ? errors : null;
 	}
 }
 
@@ -389,7 +418,7 @@ export default  {
  * To the check the select file is an image.
  * @param {String} dataURL 
  */
-export function isImage  (dataURL) {
+export function isImage(dataURL) {
 
 	const mimeType = dataURL.split(",")[0].split(":")[1].split(";")[0];
 	return mimeType.match('image.*');
@@ -399,8 +428,8 @@ export function isImage  (dataURL) {
  * @param {String} name 
  */
 export function getFileExt(name) {
-    let name_arr = name.split('.');
-    return name_arr[name_arr.length -1];
+	let name_arr = name.split('.');
+	return name_arr[name_arr.length - 1];
 }
 /**
  * To verify the file Extensions 
@@ -410,42 +439,42 @@ export function getFileExt(name) {
 export function checkFileExtensions(acceptedFiles, file) {
 
 	const fileName = file.name;
-	const fileType =  file.type
+	const fileType = file.type
 	let is_valid = false;
 	acceptedFiles.map(function (file_type) {
-		
-		if(file_type.startsWith('.')) {
+
+		if (file_type.startsWith('.')) {
 
 			var ext = getFileExt(fileName);
-			var patt = new RegExp(file_type.replace('.',''),'gmi');
-			
-			if ( patt.test(ext) === true) {
+			var patt = new RegExp(file_type.replace('.', ''), 'gmi');
+
+			if (patt.test(ext) === true) {
 
 				is_valid = true;
 			}
-		} 
-		else  {
+		}
+		else {
 
 			let match_with = file_type;
 			let patt = '';
 
-			if(file_type.endsWith('*')) {
-				
-				match_with.slice(0, -1);
-				patt = new RegExp('^'+match_with, 'gmi');
+			if (file_type.endsWith('*')) {
 
-			} 
+				match_with.slice(0, -1);
+				patt = new RegExp('^' + match_with, 'gmi');
+
+			}
 			else {
 
 				patt = new RegExp(match_with, 'gmi');
 			}
 
 
-			if ( patt.test(fileType) === true) {
+			if (patt.test(fileType) === true) {
 
 				is_valid = true;
 			}
-			
+
 		}
 	})
 
@@ -455,7 +484,7 @@ export function checkFileExtensions(acceptedFiles, file) {
 /**
  * To replace all searched keyword from string.
  */
-String.prototype.replaceAll = function(search, replacement) {
-    var target = this;
-    return target.split(search).join(replacement);
+String.prototype.replaceAll = function (search, replacement) {
+	var target = this;
+	return target.split(search).join(replacement);
 };
