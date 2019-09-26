@@ -350,7 +350,7 @@ export default {
 				if (obj[property] instanceof Date) {
 					fd.append(formKey, obj[property].toISOString());
 				}
-				else if (typeof obj[property] === 'object' && !(obj[property] instanceof File)) {
+				else if (typeof obj[property] === 'object' && !(obj[property] instanceof File) && !(obj[property] instanceof Blob)) {
 					this.objectToFormData(obj[property], fd, formKey);
 				} else { // if it's a string or a File object
 					fd.append(formKey, obj[property] ? obj[property] : '');
