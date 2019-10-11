@@ -381,7 +381,7 @@ export default {
 		let isLastIndexInteger = this.isInteger(elementLastIndex);
 		let lastIndex = isLastIndexInteger ? parseInt(elementLastIndex) : null;
 		let elementPath = elementArr.slice(0, -1).join('.');
-		const regex = new RegExp("(?<=" + elementPath + ".)[0-9]+(?=.|$)");
+		const regex = new RegExp("(" + elementPath + ".)+[0-9]+");
 
 
 		errorKeys.forEach(function (item) {
@@ -397,14 +397,17 @@ export default {
 			let elementNextIndex = regex.exec(item);
 
 			if (lastIndex !== null && elementNextIndex) {
+				const elValueWithIndex = elementNextIndex[1];
 
-				elementNextIndex = parseInt(elementNextIndex[0]);
+				elementNextIndex[0].replace(leValueWithIndex, '');
+
+				elementNextIndex = parseInt(elementNextIndex[0].replace(elementNextIndex[1], ''));
 
 				if (elementNextIndex > lastIndex) {
 
 					const newIndex = elementNextIndex - 1;
 					const oldIndexVal = errors[item];
-					const newItemIndex = item.replace(regex, newIndex);
+					const newItemIndex = elValueWithIndex + newIndex
 
 					delete errors[item];
 					errors[newItemIndex] = oldIndexVal;
