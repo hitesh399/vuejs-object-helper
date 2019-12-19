@@ -138,7 +138,7 @@ export default {
 	 * @param value => Array | Object | String,
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
-	pushProp: function (obj, props, value, listUniqueKeyName) {
+	pushProp: function (obj, props, value, listUniqueKeyName, updateIfExists) {
 
 		props = typeof props === "string" ? props.split('.') : props;
 		// Convert the value into Array
@@ -163,10 +163,13 @@ export default {
 
 					if (listUniqueKeyName) {
 
-						first_items.forEach((fi) => {
+						first_items.forEach((fi, _index) => {
 
 							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
 								isAlreadyPresent = true;
+								if (updateIfExists) {
+									Vue.set(items, _index, {...fi, ...v})
+								}
 							}
 						})
 					}
@@ -185,7 +188,7 @@ export default {
 			return
 		}
 
-		this.pushProp(obj[prop], props, value, listUniqueKeyName)
+		this.pushProp(obj[prop], props, value, listUniqueKeyName, updateIfExists)
 	},
 	/*
 	 |----------------------------------------------
@@ -196,7 +199,7 @@ export default {
 	 * @param value => Array | Object | String,
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
-	unshiftProp: function (obj, props, value, listUniqueKeyName) {
+	unshiftProp: function (obj, props, value, listUniqueKeyName, updateIfExists) {
 
 		props = typeof props === "string" ? props.split('.') : props;
 		// Convert the value into Array
@@ -224,10 +227,13 @@ export default {
 
 					if (listUniqueKeyName) {
 
-						first_items.forEach((fi) => {
+						first_items.forEach((fi, _index) => {
 
 							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
 								isAlreadyPresent = true;
+								if (updateIfExists) {
+									Vue.set(items, _index, {...fi, ...v})
+								}
 							}
 						})
 					}
@@ -246,7 +252,7 @@ export default {
 			return
 		}
 
-		this.unshiftProp(obj[prop], props, value)
+		this.unshiftProp(obj[prop], props, value, listUniqueKeyName, updateIfExists)
 	},
 	/*
 	 |------------------
@@ -255,8 +261,7 @@ export default {
 	 * @param value => Object
 	 */
 	isArray: function (value) {
-
-		return value && typeof value === 'object' && value.constructor === Array;
+		return !!value && typeof value === 'object' && value.constructor === Array;
 	},
 	/*
 	 |------------------
@@ -265,7 +270,10 @@ export default {
 	 * @param value => Object
 	 */
 	isObject: function (value) {
-		return value && typeof value === 'object' && value.constructor === Object;
+		return !!value && typeof value === 'object' && value.constructor === Object;
+	},
+	isEmptyObject: function (value) {
+		return !this.isObject(value) || Object.keys(value).length === 0
 	},
 	/*
 	 |------------------
@@ -286,7 +294,7 @@ export default {
 	 */
 	isFloat: function (value) {
 
-		let regex = new RegExp(/^-?\d*(\.\d+)?$/);
+		let regex = new RegExp(/^-?\d*(\.\d+)$/);
 		return regex.test(value);
 	},
 	/**
@@ -301,8 +309,19 @@ export default {
 		var query = parser.search.substring(1);
 		var vars = query.split('&');
 		for (var i = 0; i < vars.length; i++) {
-			var pair = vars[i].split('=');
-			params[pair[0]] = decodeURIComponent(pair[1]);
+			let pair = vars[i].split('=');
+			let key = decodeURIComponent(pair[0])
+			let value = decodeURIComponent(pair[1])
+			if (key.indexOf('[') !== -1) {
+				key = key.split('[').join('.').split(']').join('.').split('..').join('.');
+				const lastIndex = key.lastIndexOf('.')
+				if (lastIndex !== -1) {
+					key = key.substr(0, lastIndex)
+					this.setProp(params, key, value)
+				}
+			} else {
+				params[key] = value
+			}
 		}
 		return params;
 	},
@@ -419,9 +438,12 @@ export default {
  * @param {String} dataURL 
  */
 export function isImage(dataURL) {
-
-	const mimeType = dataURL.split(",")[0].split(":")[1].split(";")[0];
-	return mimeType.match('image.*');
+	try {
+		const mimeType = dataURL.split(",")[0].split(":")[1].split(";")[0];
+		return !!mimeType.match('image.*');
+	} catch (e) {
+		return false
+	}
 }
 /**
  * To get the file extension.
