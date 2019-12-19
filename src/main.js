@@ -1,5 +1,4 @@
-import Vue from 'vue';
-// To Match the string like: [tets=132], [Test1<=132]
+
 const matchArrayKey = /^\[+([0-9a-z]+)+([\=\>\<]+)+(.+)\]$/i
 
 export default {
@@ -16,11 +15,12 @@ export default {
 					const val = itm[key].toString();
 					if (
 						(operator === '=' && val == value) ||
-						(operator === '>=' && val >= value) ||
+						(operator === '==' && val === value) ||
+						(operator === '>=' && val >= value) ||						
 						(operator === '>' && val > value) ||
 						(operator === '<' && val < value) ||
 						(operator === '<=' && val <= value) ||
-						(operator === '<>' && val != value)
+						((operator === '<>' || operator === '!=') && val != value)
 					) {
 						item = itm					
 						return false
@@ -76,7 +76,7 @@ export default {
 
 		if (prop === '*') {
 
-			obj.map((val, index) => {
+			obj.forEach((val, index) => {
 				this.deleteProp(obj, [index].concat(props))
 			})
 		}
@@ -85,10 +85,16 @@ export default {
 			if (props.length === 1 && this.isInteger(props[0])) {
 
 				obj[prop].splice(parseInt(props[0]), 1);
+				obj = Object.assign({},
+					obj,
+					{[prop]: obj[prop].slice()}
+				}
 				return;
 			}
 			else if (!props.length) {
-				Vue.delete(obj, prop)
+				// Vue.delete(obj, prop)
+				delete obj[prop]
+				obj = Object.assign({}, obj)
 				return
 			}
 			this.deleteProp(obj[prop], props)
@@ -110,24 +116,96 @@ export default {
 		const prop = props.shift()
 
 		if (!obj[prop]) {
-
-			Vue.set(obj, prop, (props.length >= 1 && this.isInteger(props[0]) ? [] : {}))
+			obj = Object.assign({}, obj, {[prop]: (props.length >= 1 && this.isInteger(props[0]) ? [] : {}) })
 		}
 		if (!props.length) {
 
 			if (this.isObject(value) && replace === false) {
 
 				var preValue = obj[prop] ? obj[prop] : {};
-				Vue.set(obj, prop, { ...preValue, ...value });
+				obj = Object.assign(
+					{},
+					obj,
+					{[prop]: Object.assign({}, preValue, value) }
+				)
 
 			} else {
 
-				Vue.set(obj, prop, value);
+				// Vue.set(obj, prop, value);
+				obj = Object.assign(
+					{},
+					obj,
+					{[prop]:  value}
+				)
 			}
 
 			return
 		}
 		this.setProp(obj[prop], props, value, replace)
+	},
+	
+	_arrUpdate: function (obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true, addAction = 'push') {
+
+		props = typeof props === "string" ? props.split('.') : props;
+		// Convert the value into Array
+		value = !this.isArray(value) ? [value] : value;
+		const prop = props.shift()
+
+		if (!obj[prop]) {
+			obj = Object.assign({}, obj, {
+				[prop]:  (props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}
+			})
+		}
+		if (!props.length) {
+
+			if (obj[prop] !== undefined) {
+				let items = obj[prop];
+				value.forEach(function (v, index) {
+					let isAlreadyPresent = null;
+
+					if (listUniqueKeyName) {
+
+						items.every((fi) => {
+
+							if (
+								loosecomparison && (fi[listUniqueKeyName] == v[listUniqueKeyName])
+								||
+								!loosecomparison && (fi[listUniqueKeyName] === v[listUniqueKeyName])
+							 ) {
+								isAlreadyPresent = true;
+								if (updateIfExists) {
+									fi = Object.assign({}, fi, v)
+								}
+								return false
+							}
+							return true
+						})
+					}
+
+					if (isAlreadyPresent === null) {
+						if (addAction === 'push') {
+							items.push(v)
+						} else {
+							items.unshift(v)
+						}
+					}
+
+				});
+				obj = Object.assign({}, obj, {
+					[prop]: items.slice()
+				})
+			}
+
+			else {
+				// Vue.set(obj, prop, value);
+				obj = Object.assign({}, obj, {
+					[prop]: value
+				})
+			}
+			return
+		}
+
+		this._arrUpdate(obj[prop], props, value, listUniqueKeyName, updateIfExists, loosecomparison, addAction)
 	},
 	/*
 	 |----------------------------------------------
@@ -138,55 +216,9 @@ export default {
 	 * @param value => Array | Object | String,
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
-	pushProp: function (obj, props, value, listUniqueKeyName) {
-
-		props = typeof props === "string" ? props.split('.') : props;
-		// Convert the value into Array
-		value = !this.isArray(value) ? [value] : value;
-		//console.log('pushProp',props, value)
-		const prop = props.shift()
-
-		if (!obj[prop]) {
-			//console.log('Testing....', prop, props, ( (props.length >= 1  && this.isInteger(props[0]) || props.length ===0 ) ? [] : {}))
-			Vue.set(obj, prop, ((props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}))
-		}
-		if (!props.length) {
-
-			if (obj[prop] !== undefined) {
-				let items = obj[prop];
-				let first_items = items.slice()
-				let max_length = first_items.length;
-
-				value.forEach(function (v, index) {
-
-					let isAlreadyPresent = null;
-
-					if (listUniqueKeyName) {
-
-						first_items.forEach((fi) => {
-
-							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
-								isAlreadyPresent = true;
-							}
-						})
-					}
-
-					if (isAlreadyPresent === null) {
-						Vue.set(items, max_length++, v);
-					}
-
-				});
-			}
-
-			else {
-				Vue.set(obj, prop, value);
-
-			}
-			return
-		}
-
-		this.pushProp(obj[prop], props, value, listUniqueKeyName)
-	},
+	pushProp: function(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true) {
+		this._arrUpdate(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison, 'push')
+	}
 	/*
 	 |----------------------------------------------
 	 | To unshift the value into the Array
@@ -196,57 +228,8 @@ export default {
 	 * @param value => Array | Object | String,
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
-	unshiftProp: function (obj, props, value, listUniqueKeyName) {
-
-		props = typeof props === "string" ? props.split('.') : props;
-		// Convert the value into Array
-		value = !this.isArray(value) ? [value] : value;
-
-		const prop = props.shift()
-
-		if (!obj[prop]) {
-
-			Vue.set(obj, prop, ((props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}))
-		}
-		if (!props.length) {
-
-			if (obj[prop] !== undefined) {
-
-				let items = obj[prop];
-
-				// Storeing the items which were present before updating..
-				let first_items = Object.assign([], items);
-				// let max_length = items.length;
-
-				value.forEach(function (v, index) {
-
-					let isAlreadyPresent = null;
-
-					if (listUniqueKeyName) {
-
-						first_items.forEach((fi) => {
-
-							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
-								isAlreadyPresent = true;
-							}
-						})
-					}
-
-					if (isAlreadyPresent === null) {
-
-						items.unshift(v);
-					}
-				});
-
-			} else {
-
-				Vue.set(obj, prop, value);
-			}
-
-			return
-		}
-
-		this.unshiftProp(obj[prop], props, value)
+	unshiftProp: function (obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true) {
+		this._arrUpdate(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison, 'unshift')		
 	},
 	/*
 	 |------------------
@@ -267,6 +250,9 @@ export default {
 	isObject: function (value) {
 		return value && typeof value === 'object' && value.constructor === Object;
 	},
+	isEmptyObject: function (value) {
+		return typeof value !== 'object' || Object.keys(value).length === 0
+	}
 	/*
 	 |------------------
 	 | To check the given string contains only number or not
@@ -371,7 +357,7 @@ export default {
 	 */
 	reArrangeObjectIndex: function (obj, elementName) {
 
-		let errors = { ...obj };
+		let errors = JSON.parse(JSON.stringify(obj))
 
 		const errorKeys = Object.keys(errors);
 		let hasChangedInError = false;
@@ -448,7 +434,7 @@ export function checkFileExtensions(acceptedFiles, file) {
 	const fileName = file.name;
 	const fileType = file.type
 	let is_valid = false;
-	acceptedFiles.map(function (file_type) {
+	acceptedFiles.forEach(function (file_type) {
 
 		if (file_type.startsWith('.')) {
 
@@ -488,10 +474,10 @@ export function checkFileExtensions(acceptedFiles, file) {
 	return is_valid;
 }
 
-/**
- * To replace all searched keyword from string.
- */
-String.prototype.replaceAll = function (search, replacement) {
-	var target = this;
-	return target.split(search).join(replacement);
-};
+// /**
+//  * To replace all searched keyword from string.
+//  */
+// String.prototype.replaceAll = function (search, replacement) {
+// 	var target = this;
+// 	return target.split(search).join(replacement);
+// };
