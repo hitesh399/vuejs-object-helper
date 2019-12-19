@@ -15,13 +15,13 @@ export default {
 					const val = itm[key].toString();
 					if (
 						(operator === '=' && val == value) ||
-						(operator === '>=' && val >= value) ||						
+						(operator === '>=' && val >= value) ||
 						(operator === '>' && val > value) ||
 						(operator === '<' && val < value) ||
 						(operator === '<=' && val <= value) ||
 						((operator === '<>' || operator === '!=') && val != value)
 					) {
-						item = itm					
+						item = itm
 						return false
 					} else {
 						return true
@@ -84,7 +84,7 @@ export default {
 				obj[prop].splice(parseInt(props[0]), 1);
 				Object.assign(
 					obj,
-					{[prop]: obj[prop].slice()}
+					{ [prop]: obj[prop].slice() }
 				)
 				return;
 			}
@@ -112,7 +112,7 @@ export default {
 		const prop = props.shift()
 
 		if (!obj[prop]) {
-			Object.assign(obj, {[prop]: (props.length >= 1 && this.isInteger(props[0]) ? [] : {}) })
+			Object.assign(obj, { [prop]: (props.length >= 1 && this.isInteger(props[0]) ? [] : {}) })
 		}
 		if (!props.length) {
 
@@ -121,7 +121,7 @@ export default {
 				let preValue = obj[prop] ? obj[prop] : {};
 				Object.assign(
 					obj,
-					{[prop]: Object.assign(preValue, value) }
+					{ [prop]: Object.assign(preValue, value) }
 				)
 
 			} else {
@@ -129,7 +129,7 @@ export default {
 				// Vue.set(obj, prop, value);
 				Object.assign(
 					obj,
-					{[prop]:  value}
+					{ [prop]: value }
 				)
 			}
 
@@ -137,7 +137,7 @@ export default {
 		}
 		this.setProp(obj[prop], props, value, replace)
 	},
-	
+
 	_arrUpdate: function (obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true, addAction = 'push') {
 
 		props = typeof props === "string" ? props.split('.') : props;
@@ -147,55 +147,46 @@ export default {
 
 		if (!obj[prop]) {
 			Object.assign(obj, {
-				[prop]:  (props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}
+				[prop]: (props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}
 			})
 		}
 		if (!props.length) {
 
-			if (obj[prop] !== undefined) {
-				let items = obj[prop];
-				value.forEach(function (v, index) {
-					let isAlreadyPresent = null;
+			let items = obj[prop];
+			value.forEach(function (v) {
+				let isAlreadyPresent = null;
 
-					if (listUniqueKeyName) {
+				if (listUniqueKeyName) {
 
-						items.every((fi) => {
+					items.every((fi) => {
 
-							if (
-								loosecomparison && (fi[listUniqueKeyName] == v[listUniqueKeyName])
-								||
-								!loosecomparison && (fi[listUniqueKeyName] === v[listUniqueKeyName])
-							 ) {
-								isAlreadyPresent = true;
-								if (updateIfExists) {
-									Object.assign(fi, v)
-								}
-								return false
+						if (
+							loosecomparison && (fi[listUniqueKeyName] == v[listUniqueKeyName])
+							||
+							!loosecomparison && (fi[listUniqueKeyName] === v[listUniqueKeyName])
+						) {
+							isAlreadyPresent = true;
+							if (updateIfExists) {
+								Object.assign(fi, v)
 							}
-							return true
-						})
-					}
-
-					if (isAlreadyPresent === null) {
-						if (addAction === 'push') {
-							items.push(v)
-						} else {
-							items.unshift(v)
+							return false
 						}
+						return true
+					})
+				}
+
+				if (isAlreadyPresent === null) {
+					if (addAction === 'push') {
+						items.push(v)
+					} else {
+						items.unshift(v)
 					}
+				}
 
-				});
-				Object.assign(obj, {
-					[prop]: items.slice()
-				})
-			}
-
-			else {
-				// Vue.set(obj, prop, value);
-				Object.assign( obj, {
-					[prop]: value
-				})
-			}
+			});
+			Object.assign(obj, {
+				[prop]: items.slice()
+			})
 			return
 		}
 
@@ -210,7 +201,7 @@ export default {
 	 * @param value => Array | Object | String,
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
-	pushProp: function(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true) {
+	pushProp: function (obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true) {
 		this._arrUpdate(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison, 'push')
 	},
 	/*
@@ -223,7 +214,7 @@ export default {
 	 * @param listUniqueKeyName => String, If you want to check the unique object before adding.
 	 */
 	unshiftProp: function (obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true) {
-		this._arrUpdate(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison, 'unshift')		
+		this._arrUpdate(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison, 'unshift')
 	},
 	/*
 	 |------------------
@@ -232,8 +223,7 @@ export default {
 	 * @param value => Object
 	 */
 	isArray: function (value) {
-
-		return value && typeof value === 'object' && value.constructor === Array;
+		return !!value && typeof value === 'object' && value.constructor === Array;
 	},
 	/*
 	 |------------------
@@ -242,10 +232,10 @@ export default {
 	 * @param value => Object
 	 */
 	isObject: function (value) {
-		return value && typeof value === 'object' && value.constructor === Object;
+		return !!value && typeof value === 'object' && value.constructor === Object;
 	},
 	isEmptyObject: function (value) {
-		return typeof value !== 'object' || Object.keys(value).length === 0
+		return !this.isObject(value) || Object.keys(value).length === 0
 	},
 	/*
 	 |------------------
@@ -266,7 +256,7 @@ export default {
 	 */
 	isFloat: function (value) {
 
-		let regex = new RegExp(/^-?\d*(\.\d+)?$/);
+		let regex = new RegExp(/^-?\d*(\.\d+)$/);
 		return regex.test(value);
 	},
 	/**
@@ -281,8 +271,19 @@ export default {
 		var query = parser.search.substring(1);
 		var vars = query.split('&');
 		for (var i = 0; i < vars.length; i++) {
-			var pair = vars[i].split('=');
-			params[pair[0]] = decodeURIComponent(pair[1]);
+			let pair = vars[i].split('=');
+			let key = decodeURIComponent(pair[0])
+			let value = decodeURIComponent(pair[1])
+			if (key.indexOf('[') !== -1) {
+				key = key.split('[').join('.').split(']').join('.').split('..').join('.');
+				const lastIndex = key.lastIndexOf('.')
+				if (lastIndex !== -1) {
+					key = key.substr(0, lastIndex)
+					this.setProp(params, key, value)
+				}
+			} else {
+				params[key] = value
+			}
 		}
 		return params;
 	},
@@ -333,9 +334,9 @@ export default {
 				else if (typeof obj[property] === 'object' && !(obj[property] instanceof File) && !(obj[property] instanceof Blob)) {
 					this.objectToFormData(obj[property], fd, formKey);
 				} else { // if it's a string or a File object
-					if ((obj[property] instanceof Blob) &&  obj[property]) {
+					if ((obj[property] instanceof Blob) && obj[property]) {
 						fd.append(formKey, obj[property], obj[property].name);
-					} else if(obj[property]) {
+					} else if (obj[property]) {
 						fd.append(formKey, obj[property]);
 					}
 				}
@@ -378,16 +379,14 @@ export default {
 
 			if (lastIndex !== null && elementNextIndex) {
 				const elValueWithIndex = elementNextIndex[1];
-
-				elementNextIndex[0].replace(leValueWithIndex, '');
-
+				const elementNameWithKey = elementNextIndex[0];
+				elementNextIndex[0].replace(elValueWithIndex, '');
 				elementNextIndex = parseInt(elementNextIndex[0].replace(elementNextIndex[1], ''));
-
 				if (elementNextIndex > lastIndex) {
 
 					const newIndex = elementNextIndex - 1;
 					const oldIndexVal = errors[item];
-					const newItemIndex = elValueWithIndex + newIndex
+					const newItemIndex = item.replace(elementNameWithKey, elValueWithIndex + newIndex)
 
 					delete errors[item];
 					errors[newItemIndex] = oldIndexVal;
@@ -406,9 +405,12 @@ export default {
  * @param {String} dataURL 
  */
 export function isImage(dataURL) {
-
-	const mimeType = dataURL.split(",")[0].split(":")[1].split(";")[0];
-	return mimeType.match('image.*');
+	try {
+		const mimeType = dataURL.split(",")[0].split(":")[1].split(";")[0];
+		return !!mimeType.match('image.*');
+	} catch (e) {
+		return false
+	}
 }
 /**
  * To get the file extension.
