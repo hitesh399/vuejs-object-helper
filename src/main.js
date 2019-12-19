@@ -15,7 +15,6 @@ export default {
 					const val = itm[key].toString();
 					if (
 						(operator === '=' && val == value) ||
-						(operator === '==' && val === value) ||
 						(operator === '>=' && val >= value) ||						
 						(operator === '>' && val > value) ||
 						(operator === '<' && val < value) ||
@@ -85,16 +84,16 @@ export default {
 			if (props.length === 1 && this.isInteger(props[0])) {
 
 				obj[prop].splice(parseInt(props[0]), 1);
-				obj = Object.assign({},
+				Object.assign(
 					obj,
 					{[prop]: obj[prop].slice()}
-				}
+				)
 				return;
 			}
 			else if (!props.length) {
 				// Vue.delete(obj, prop)
 				delete obj[prop]
-				obj = Object.assign({}, obj)
+				Object.assign({}, obj)
 				return
 			}
 			this.deleteProp(obj[prop], props)
@@ -116,24 +115,22 @@ export default {
 		const prop = props.shift()
 
 		if (!obj[prop]) {
-			obj = Object.assign({}, obj, {[prop]: (props.length >= 1 && this.isInteger(props[0]) ? [] : {}) })
+			Object.assign(obj, {[prop]: (props.length >= 1 && this.isInteger(props[0]) ? [] : {}) })
 		}
 		if (!props.length) {
 
 			if (this.isObject(value) && replace === false) {
 
-				var preValue = obj[prop] ? obj[prop] : {};
-				obj = Object.assign(
-					{},
+				let preValue = obj[prop] ? obj[prop] : {};
+				Object.assign(
 					obj,
-					{[prop]: Object.assign({}, preValue, value) }
+					{[prop]: Object.assign(preValue, value) }
 				)
 
 			} else {
 
 				// Vue.set(obj, prop, value);
-				obj = Object.assign(
-					{},
+				Object.assign(
 					obj,
 					{[prop]:  value}
 				)
@@ -152,7 +149,7 @@ export default {
 		const prop = props.shift()
 
 		if (!obj[prop]) {
-			obj = Object.assign({}, obj, {
+			Object.assign(obj, {
 				[prop]:  (props.length >= 1 && this.isInteger(props[0]) || props.length === 0) ? [] : {}
 			})
 		}
@@ -174,7 +171,7 @@ export default {
 							 ) {
 								isAlreadyPresent = true;
 								if (updateIfExists) {
-									fi = Object.assign({}, fi, v)
+									Object.assign(fi, v)
 								}
 								return false
 							}
@@ -191,14 +188,14 @@ export default {
 					}
 
 				});
-				obj = Object.assign({}, obj, {
+				Object.assign(obj, {
 					[prop]: items.slice()
 				})
 			}
 
 			else {
 				// Vue.set(obj, prop, value);
-				obj = Object.assign({}, obj, {
+				Object.assign( obj, {
 					[prop]: value
 				})
 			}
@@ -218,7 +215,7 @@ export default {
 	 */
 	pushProp: function(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison = true) {
 		this._arrUpdate(obj, props, value, listUniqueKeyName, updateIfExists, loosecomparison, 'push')
-	}
+	},
 	/*
 	 |----------------------------------------------
 	 | To unshift the value into the Array
@@ -252,7 +249,7 @@ export default {
 	},
 	isEmptyObject: function (value) {
 		return typeof value !== 'object' || Object.keys(value).length === 0
-	}
+	},
 	/*
 	 |------------------
 	 | To check the given string contains only number or not
