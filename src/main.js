@@ -372,7 +372,11 @@ export default {
 				else if (typeof obj[property] === 'object' && !(obj[property] instanceof File) && !(obj[property] instanceof Blob)) {
 					this.objectToFormData(obj[property], fd, formKey);
 				} else { // if it's a string or a File object
-					fd.append(formKey, obj[property] ? obj[property] : '');
+					if ((obj[property] instanceof Blob) &&  obj[property]) {
+						fd.append(formKey, obj[property], obj[property].name);
+					} else if(obj[property]) {
+						fd.append(formKey, obj[property]);
+					}
 				}
 			}
 		}
@@ -386,7 +390,7 @@ export default {
 	 */
 	reArrangeObjectIndex: function (obj, elementName) {
 
-		let errors = { ...obj };
+		let errors = JSON.parse(JSON.stringify(obj))
 
 		const errorKeys = Object.keys(errors);
 		let hasChangedInError = false;
@@ -396,8 +400,7 @@ export default {
 		let isLastIndexInteger = this.isInteger(elementLastIndex);
 		let lastIndex = isLastIndexInteger ? parseInt(elementLastIndex) : null;
 		let elementPath = elementArr.slice(0, -1).join('.');
-		const regex = new RegExp("(?<=" + elementPath + ".)[0-9]+(?=.|$)");
-
+		const regex = new RegExp("(" + elementPath + ".)+[0-9]+");
 
 		errorKeys.forEach(function (item) {
 
@@ -412,14 +415,15 @@ export default {
 			let elementNextIndex = regex.exec(item);
 
 			if (lastIndex !== null && elementNextIndex) {
-
-				elementNextIndex = parseInt(elementNextIndex[0]);
-
+				const elValueWithIndex = elementNextIndex[1];
+				const elementNameWithKey = elementNextIndex[0];
+				elementNextIndex[0].replace(elValueWithIndex, '');
+				elementNextIndex = parseInt(elementNextIndex[0].replace(elementNextIndex[1], ''));
 				if (elementNextIndex > lastIndex) {
 
 					const newIndex = elementNextIndex - 1;
 					const oldIndexVal = errors[item];
-					const newItemIndex = item.replace(regex, newIndex);
+					const newItemIndex = item.replace(elementNameWithKey, elValueWithIndex + newIndex)
 
 					delete errors[item];
 					errors[newItemIndex] = oldIndexVal;
