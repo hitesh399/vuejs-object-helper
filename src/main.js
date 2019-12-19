@@ -74,7 +74,6 @@ export default {
 		}
 
 		if (prop === '*') {
-
 			obj.forEach((val, index) => {
 				this.deleteProp(obj, [index].concat(props))
 			})
@@ -82,7 +81,6 @@ export default {
 		else {
 
 			if (props.length === 1 && this.isInteger(props[0])) {
-
 				obj[prop].splice(parseInt(props[0]), 1);
 				Object.assign(
 					obj,
@@ -91,9 +89,8 @@ export default {
 				return;
 			}
 			else if (!props.length) {
-				// Vue.delete(obj, prop)
 				delete obj[prop]
-				Object.assign({}, obj)
+				Object.assign(obj)
 				return
 			}
 			this.deleteProp(obj[prop], props)

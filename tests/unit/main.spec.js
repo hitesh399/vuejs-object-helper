@@ -77,3 +77,25 @@ test('Set Value in Object[test setProp]', () => {
     expect(test_collection1.name.test).toBe('Test1')
 
 })
+
+test('Set Value in Object[test setProp]', () => {
+
+    let test_collection = {id: 1, name: 'Hitesh', child: [{id: 2, name: 'Hitesh2'}, {id: 3, name: 'Hitesh3'}]}
+    main.deleteProp(test_collection, 'child.*');
+    expect(test_collection.child[0]).toBe(undefined)
+    expect(test_collection.child[1]).toBe(undefined)
+
+    let test_collection1 = {id: 1, name: 'Hitesh', child: [{id: 2, name: 'Hitesh2'}, {id: 3, name: 'Hitesh3'}]}
+    main.deleteProp(test_collection1, 'child.*.name');
+    expect(test_collection1.child[0].name).toBe(undefined)
+    expect(test_collection1.child[1].name).toBe(undefined)
+
+
+    let test_collection2 = {id: 1, name: 'Hitesh', child: [{id: 2, name: 'Hitesh2'}, {id: 3, name: 'Hitesh3'}]}
+    main.deleteProp(test_collection2, 'child.1');
+    expect(test_collection2.child[1]).toBe(undefined)
+
+    let test_collection3 = {id: 1, name: 'Hitesh', child: [{id: 2, name: 'Hitesh2'}, {id: 3, name: 'Hitesh3'}]}
+    main.deleteProp(test_collection3, '_child');
+    expect(test_collection3).toBe(test_collection3)
+})
