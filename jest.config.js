@@ -2,7 +2,7 @@ module.exports = {
     
       "collectCoverage": true,
       "collectCoverageFrom": [
-        "**/*.{js,vue}",
+        "src/main.js",
         "!**/node_modules/**"
       ],
       "coverageReporters": ["html", "text-summary"],
