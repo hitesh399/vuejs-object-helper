@@ -22,7 +22,7 @@ export default {
 						(operator === '<=' && val <= value) ||
 						(operator === '<>' && val != value)
 					) {
-						item = itm					
+						item = itm
 						return false
 					} else {
 						return true
@@ -168,7 +168,7 @@ export default {
 							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
 								isAlreadyPresent = true;
 								if (updateIfExists) {
-									Vue.set(items, _index, {...fi, ...v})
+									Vue.set(items, _index, { ...fi, ...v })
 								}
 							}
 						})
@@ -232,7 +232,7 @@ export default {
 							if (fi[listUniqueKeyName] == v[listUniqueKeyName]) {
 								isAlreadyPresent = true;
 								if (updateIfExists) {
-									Vue.set(items, _index, {...fi, ...v})
+									Vue.set(items, _index, { ...fi, ...v })
 								}
 							}
 						})
@@ -372,9 +372,9 @@ export default {
 				else if (typeof obj[property] === 'object' && !(obj[property] instanceof File) && !(obj[property] instanceof Blob)) {
 					this.objectToFormData(obj[property], fd, formKey);
 				} else { // if it's a string or a File object
-					if ((obj[property] instanceof Blob) &&  obj[property]) {
+					if ((obj[property] instanceof Blob) && obj[property]) {
 						fd.append(formKey, obj[property], obj[property].name);
-					} else if(obj[property]) {
+					} else if (obj[property]) {
 						fd.append(formKey, obj[property]);
 					}
 				}
@@ -388,9 +388,8 @@ export default {
 	 * @param obj => Object
 	 * @param elementName => element name which is going to delete.
 	 */
-	reArrangeObjectIndex: function (obj, elementName) {
-
-		let errors = JSON.parse(JSON.stringify(obj))
+	reArrangeObjectIndex: function (obj, elementName, clone = false) {
+		let errors = clone ? JSON.parse(JSON.stringify(obj)) : obj
 
 		const errorKeys = Object.keys(errors);
 		let hasChangedInError = false;
