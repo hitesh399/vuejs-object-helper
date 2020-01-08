@@ -339,9 +339,12 @@ export default {
 			if (obj.hasOwnProperty(p)) {
 				var k = prefix ? prefix + "[" + p + "]" : p,
 					v = obj[p];
-				str.push((v !== null && typeof v === "object") ?
+				const value = (v !== null && typeof v === "object") ?
 					this.objectToQueryString(v, k) :
-					encodeURIComponent(k) + "=" + encodeURIComponent(v ? v : ''));
+					encodeURIComponent(k) + "=" + encodeURIComponent(v ? v : '')
+				if (value) {
+					str.push(value)
+				}
 			}
 		}
 		return str.join("&");
